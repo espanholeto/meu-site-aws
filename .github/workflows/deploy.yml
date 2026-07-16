@@ -1,0 +1,29 @@
+name: Enviar Site para o S3
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Baixar o código do repositório
+      uses: actions/checkout@v4.2.2 # Versão atualizada sem avisos de Node
+
+    - name: Configurar as credenciais da AWS
+      uses: aws-actions/configure-aws-credentials@v4.1.3 # Versão estável e atualizada
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1-an # Garanta que esta é a região certa do seu S3
+
+    - name: Copiar arquivos para o S3
+      run: |
+        aws s3 sync . s3://meu-site-estatico-s3-535169239265-us-east-1-an --exclude ".github/*" --exclude ".git/*"
+
+    - name: Limpar Cache do CloudFront (Opcional - Remove o delay do site)
+      run: |
+        aws cloudfront create-invalidation --distribution-id dqeswme3xm29c.cloudfront.net --paths "/*"
